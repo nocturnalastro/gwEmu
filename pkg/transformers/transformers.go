@@ -3,6 +3,7 @@ package transformers
 import (
 	"errors"
 	"fmt"
+	"gwEmu/pkg/config"
 	"gwEmu/pkg/resource"
 	"strconv"
 	"strings"
@@ -15,10 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+var allowedSelectors = []string{"stress"}
+
 func makeCombinedErrorMessage(errs []error) string {
 	msgs := make([]string, len(errs))
-	for _, err := range errs {
-		msgs = append(msgs, err.Error())
+	for i, err := range errs {
+		msgs[i] = err.Error()
 	}
 	return strings.Join(msgs, ", ")
 }
@@ -34,25 +37,58 @@ func Transform(resources []resource.Resource) ([]runtime.Object, error) {
 				errors = append(errors, err)
 			}
 			transformed = append(transformed, t)
+		default:
+			transformed = append(transformed, res.Obj)
+			errors = append(errors, fmt.Errorf(
+				"do not know how to handle %s/%s/%s",
+				res.GKV.Group, res.GKV.Version, res.GKV.Kind,
+			))
 		}
 	}
 	if len(errors) > 0 {
 		return transformed, fmt.Errorf("some manfiests where not fully transformed: %s", makeCombinedErrorMessage(errors))
+
 	}
 
 	return transformed, nil
 }
 
+func isAllowedSelector(value string) bool {
+	for _, s := range allowedSelectors {
+		if s == value {
+			return true
+		}
+	}
+	return false
+}
+
 func extractFromLabels(labels map[string]string) map[string]map[string]string {
 	values := make(map[string]map[string]string)
 
+	var prefix string = "gwEmu"
+	prefixSuffix, err := config.GetConifg[string]("prefix-suffix")
+	if err != nil {
+		if errors.Is(err, config.TypeConvError{}) {
+			log.Error().Msg("Failed to convert")
+		} else if errors.Is(err, config.Missing{}) {
+			log.Error().Msg("No prefix-suffix not set falling back to no gwEmu")
+		}
+	} else {
+		prefix = fmt.Sprintf("gwEmu-%s", *prefixSuffix)
+	}
+	prefixLen := len(strings.Split(prefix, "-"))
+
 	for key, value := range labels {
-		if strings.HasPrefix(key, "gwEmu") {
+		if strings.HasPrefix(key, prefix) {
 			parts := strings.Split(key, "-")
-			if _, ok := values[parts[1]]; !ok {
-				values[parts[1]] = make(map[string]string)
+			if !isAllowedSelector(parts[prefixLen]) {
+				continue
 			}
-			values[parts[1]][strings.Join(parts[2:], "-")] = value
+			prefixValue := parts[prefixLen]
+			if _, ok := values[prefixValue]; !ok {
+				values[prefixValue] = make(map[string]string)
+			}
+			values[prefixValue][strings.Join(parts[prefixLen+1:], "-")] = value
 		}
 	}
 	return values
@@ -113,7 +149,7 @@ func getContainters(selector string, values map[string]string) ([]coreV1.Contain
 		}
 	}
 	if container == nil {
-		return []coreV1.Container{}, fmt.Errorf("missing container def for slector %s", selector)
+		return []coreV1.Container{}, fmt.Errorf("missing container def for selector '%s'", selector)
 	}
 	// log.Debug().Msg(fmt.Sprintf("number of repeats %d", repeats))
 	list := make([]coreV1.Container, repeats)
@@ -137,14 +173,6 @@ func compareContainers(a, b coreV1.Container) bool {
 	if a.Resources.Limits.Memory().Cmp(*b.Resources.Limits.Memory()) == -1 {
 		return false
 	}
-
-	// if a.Resources.Requests.Cpu().Cmp(*b.Resources.Requests.Cpu()) == -1 {
-	// 	return false
-	// }
-	// if a.Resources.Requests.Memory().Cmp(*b.Resources.Requests.Memory()) == -1 {
-	// 	return false
-	// }
-
 	return true
 }
 

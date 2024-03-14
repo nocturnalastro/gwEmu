@@ -6,6 +6,10 @@ metadata:
     app: test1
     gwEmu-stress-stress_cpu: "4"
     gwEmu-stress-repeats: "2"
+    gwEmu-1-stress-stress_cpu: "4"
+    gwEmu-1-stress-repeats: "3"
+    gwEmu-2-stress-stress_cpu: "4"
+    gwEmu-2-stress-repeats: "1"
 spec:
   replicas: 1
   selector:

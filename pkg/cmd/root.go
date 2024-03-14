@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"fmt"
+	"gwEmu/pkg/config"
 	"gwEmu/pkg/resource"
 	"gwEmu/pkg/transformers"
 	"os"
@@ -36,8 +37,9 @@ func printAndExit(msg any) {
 }
 
 var (
-	filePath string
-	loglevel string
+	filePath     string
+	loglevel     string
+	prefixSuffix string
 
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
@@ -50,6 +52,11 @@ var (
 				return err
 			}
 			zerolog.SetGlobalLevel(level)
+
+			if prefixSuffix != "" {
+				config.SetConfig("prefix-suffix", prefixSuffix)
+			}
+
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -84,7 +91,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(
+	rootCmd.Flags().StringVarP(
 		&filePath,
 		"file",
 		"f",
@@ -98,4 +105,13 @@ func init() {
 		zerolog.LevelErrorValue,
 		"path to input file ",
 	)
+
+	rootCmd.Flags().StringVarP(
+		&prefixSuffix,
+		"prefix-suffix",
+		"p",
+		"",
+		"Extra suffix for label prefix",
+	)
+
 }
