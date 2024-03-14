@@ -1,0 +1,198 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test1-deployment
+  labels:
+    app: test1
+    gwEmu-stress-stress_cpu: "4"
+    gwEmu-stress-repeats: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test1
+  template:
+    metadata:
+      labels:
+        app: test1
+    spec:
+      containers:
+      - env:
+        - name: SERVICE_NAME
+          value: t1
+        - name: CONTAINER_NAME
+          value: t1
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.uid
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: quay.io/test_images/spam_150_1_8001:ipv6
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /
+            port: 8001
+          periodSeconds: 40
+          successThreshold: 1
+          timeoutSeconds: 30
+        name: t1
+        ports:
+        - containerPort: 8001
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 40
+          successThreshold: 1
+          timeoutSeconds: 30
+        resources:
+          limits:
+            cpu: 2
+            memory: 2Gi
+          requests:
+            cpu: 2
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - MKNOD
+            - all
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+        volumeMounts:
+        - mountPath: /etc/t1-1
+          name: t1-1
+          readOnly: true
+        - mountPath: /etc/t1-2
+          name: t1-2
+          readOnly: true
+        - mountPath: /etc/t1-3
+          name: t1-3
+          readOnly: true
+        - mountPath: /etc/t1-4
+          name: t1-4
+          readOnly: true
+        - mountPath: /etc/t1-5
+          name: t1-5
+          readOnly: true
+      - env:
+        - name: SERVICE_NAME
+          value: t1
+        - name: CONTAINER_NAME
+          value: t1
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.uid
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: quay.io/test_images/spam_150_1_8001:ipv6
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /
+            port: 8001
+          periodSeconds: 40
+          successThreshold: 1
+          timeoutSeconds: 30
+        name: t1
+        ports:
+        - containerPort: 8001
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 40
+          successThreshold: 1
+          timeoutSeconds: 30
+        resources:
+          limits:
+            cpu: 2
+            memory: 2Gi
+          requests:
+            cpu: 2
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - MKNOD
+            - all
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+        volumeMounts:
+        - mountPath: /etc/t1-1
+          name: t1-1
+          readOnly: true
+        - mountPath: /etc/t1-2
+          name: t1-2
+          readOnly: true
+        - mountPath: /etc/t1-3
+          name: t1-3
+          readOnly: true
+        - mountPath: /etc/t1-4
+          name: t1-4
+          readOnly: true
+        - mountPath: /etc/t1-5
+          name: t1-5
+          readOnly: true
+      volumes:
+      - name: t1-1
+        secret:
+          defaultMode: 416
+          secretName: s2-2
+      - name: t1-2
+        secret:
+          defaultMode: 416
+          secretName: s1-1
+      - name: t1-3
+        secret:
+          defaultMode: 416
+          secretName: s2-1
+      - name: t1-4
+        secret:
+          defaultMode: 416
+          secretName: s186-2
+      - name: t1-5
+        secret:
+          defaultMode: 420
+          secretName: s6-2
